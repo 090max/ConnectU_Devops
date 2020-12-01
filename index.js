@@ -1,8 +1,12 @@
 const express = require("express");
-const http = require("http");
-const cors = require("cors");
 const socketio = require("socket.io");
-const PORT = 8080;
+const http = require("http");
+const path = require("path");
+
+const { addUser, removeUser, getUser, getUsersInRoom } = require("./users");
+
+const cors = require("cors");
+const PORT = process.env.PORT || 8000;
 
 const router = require("./router");
 
@@ -10,11 +14,13 @@ const app = express();
 const server = http.createServer(app);
 const io = socketio(server);
 
-const { addUser, removeUser, getUser, getUsersInRoom } = require("./users");
+app.use(express.static(path.join(__dirname, "/build")));
 
 app.get("/", (req, res) => {
-  res.send("Server is Up");
+  res.sendFile(path.join(__dirname, "/build/index.html"));
 });
+
+io.set("origins", "*:*");
 
 io.on("connection", (socket) => {
   socket.on("join", ({ name, room }, callback) => {
@@ -89,8 +95,8 @@ io.on("connection", (socket) => {
   });
 });
 
+app.use(router);
 app.use(cors());
-
-app.listen(PORT, (req, res) => {
-  console.log("Server running on ..", PORT);
+server.listen(PORT, () => {
+  console.log(`Server has started on port ${PORT}`);
 });
